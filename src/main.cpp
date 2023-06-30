@@ -10,7 +10,7 @@ enum class Direction {
 
 class Snake {
 public:
-    Snake(sf::Texture& atlas) : die(false), direction(Direction::RIGHT) {
+    Snake(sf::Texture& atlas) : die(false), direction(Direction::RIGHT), changed_direction(false) {
         sf::Sprite head(atlas, sf::IntRect({16, 0}, {16, 16}));
         head.scale({2.0f, 2.0f});
         head.setPosition({9.0f * 32.0f, 9.0f * 32.0f});
@@ -18,6 +18,7 @@ public:
         sf::Sprite tail(atlas, sf::IntRect({32, 0}, {16, 16}));
         tail.scale({2.0f, 2.0f});
         tail.setPosition({8.0f * 32.0f, 9.0f * 32.0f});
+        prev_end_pos = {7.0f * 32.0f, 9.0f * 32.0f};
 
         snake.push_back(head);
         snake.push_back(tail);
@@ -59,6 +60,7 @@ public:
                 snake[i].setPosition(snake[i-1].getPosition());
             }
         }
+        changed_direction = false;
     }
 
     void draw(sf::RenderWindow& window) {
@@ -71,15 +73,16 @@ public:
     sf::Vector2f prev_end_pos;
     std::vector<sf::Sprite> snake;
 
+    bool changed_direction;
     bool die;
 };
 
 int main() {
-    sf::RenderWindow window = sf::RenderWindow(sf::VideoMode(sf::Vector2<unsigned int>(640, 640)), "SFML");
+    sf::RenderWindow window = sf::RenderWindow(sf::VideoMode(sf::Vector2<unsigned int>(640, 640)), "Snake: an SFML game by Thomas McConkey");
     window.setVerticalSyncEnabled(true);
 
     sf::Texture atlas;
-    atlas.loadFromFile("assets/snake.png");
+    atlas.loadFromFile("assets/atlas.png");
 
     sf::Sprite apple(atlas, sf::IntRect({0, 0}, {16, 16}));
     apple.scale({2.0f, 2.0f});
@@ -89,11 +92,16 @@ int main() {
     board.scale({32.0f, 32.0f});
 
     Snake snake = Snake(atlas);
-    snake.add_length(atlas);
 
     sf::Clock clock;
     int timer = clock.getElapsedTime().asMilliseconds();
     int delay = 150;
+
+    if (sf::Joystick::isConnected(0)) {
+        std::cout << "Gamepad connected" << std::endl;
+    } else {
+        std::cout << "No gamepad connected, using keyboard input" << std::endl;
+    }
 
     while (window.isOpen()) {
         sf::Event event;
@@ -103,29 +111,76 @@ int main() {
                     window.close();
                     break;
                 case sf::Event::KeyPressed:
-                    if (event.key.scancode == sf::Keyboard::Scan::Escape) window.close();
-                    if ((event.key.scancode == sf::Keyboard::Scan::W || event.key.scancode == sf::Keyboard::Scan::Up) && snake.direction != Direction::DOWN) {
-                        snake.direction = Direction::UP;
-                    }
-                    if ((event.key.scancode == sf::Keyboard::Scan::S || event.key.scancode == sf::Keyboard::Scan::Down) && snake.direction != Direction::UP) {
-                        snake.direction = Direction::DOWN;
-                    }
-                    if ((event.key.scancode == sf::Keyboard::Scan::A || event.key.scancode == sf::Keyboard::Scan::Left) && snake.direction != Direction::RIGHT) {
-                        snake.direction = Direction::LEFT;
-                    }
-                    if ((event.key.scancode == sf::Keyboard::Scan::D || event.key.scancode == sf::Keyboard::Scan::Right) && snake.direction != Direction::LEFT) {
-                        snake.direction = Direction::RIGHT;
+                    if (!sf::Joystick::isConnected(0)) {
+                        if (event.key.scancode == sf::Keyboard::Scan::Escape) window.close();
+                        if ((event.key.scancode == sf::Keyboard::Scan::W || event.key.scancode == sf::Keyboard::Scan::Up) && snake.direction != Direction::DOWN && !snake.changed_direction) {
+                            snake.direction = Direction::UP;
+                            snake.changed_direction = true;
+                        }
+                        if ((event.key.scancode == sf::Keyboard::Scan::S || event.key.scancode == sf::Keyboard::Scan::Down) && snake.direction != Direction::UP && !snake.changed_direction) {
+                            snake.direction = Direction::DOWN;
+                            snake.changed_direction = true;
+                        }
+                        if ((event.key.scancode == sf::Keyboard::Scan::A || event.key.scancode == sf::Keyboard::Scan::Left) && snake.direction != Direction::RIGHT && !snake.changed_direction) {
+                            snake.direction = Direction::LEFT;
+                            snake.changed_direction = true;
+                        }
+                        if ((event.key.scancode == sf::Keyboard::Scan::D || event.key.scancode == sf::Keyboard::Scan::Right) && snake.direction != Direction::LEFT && !snake.changed_direction) {
+                            snake.direction = Direction::RIGHT;
+                            snake.changed_direction = true;
+                        }
                     }
                     break;
             }
         }
-        
+
+        if (sf::Joystick::isConnected(0)) {
+            if ((sf::Joystick::getAxisPosition(0, sf::Joystick::Y) <= -70.0f) && snake.direction != Direction::DOWN && !snake.changed_direction) {
+                snake.direction = Direction::UP;
+                snake.changed_direction = true;
+            }
+            if ((sf::Joystick::getAxisPosition(0, sf::Joystick::Y) >= 70.0f) && snake.direction != Direction::UP && !snake.changed_direction) {
+                snake.direction = Direction::DOWN;
+                snake.changed_direction = true;
+            }
+            if ((sf::Joystick::getAxisPosition(0, sf::Joystick::X) <= -70.0f)  && snake.direction != Direction::RIGHT && !snake.changed_direction) {
+                snake.direction = Direction::LEFT;
+                snake.changed_direction = true;
+            }
+            if ((sf::Joystick::getAxisPosition(0, sf::Joystick::X) >= 70.0f ) && snake.direction != Direction::LEFT && !snake.changed_direction) {
+                snake.direction = Direction::RIGHT;
+                snake.changed_direction = true;
+            }
+        }
+
+
         if (clock.getElapsedTime().asMilliseconds() - timer > delay) {
             snake.move();
             timer = clock.getElapsedTime().asMilliseconds();
         }
 
-        if (snake.die) window.close();
+        if (snake.snake[0].getGlobalBounds().findIntersection(apple.getGlobalBounds())) {
+            snake.add_length(atlas);
+
+            back:
+                sf::Vector2f new_position = {(float)(rand() % 16) * 32.0f, (float)(rand() % 16) * 32.0f};
+                apple.setPosition(new_position);
+
+                for (int i = 1; i < snake.snake.size(); i++) {
+                    if (snake.snake[i].getGlobalBounds().findIntersection(apple.getGlobalBounds())) {
+                        goto back;
+                    }
+                }
+        }
+
+        for (int i = 1; i < snake.snake.size(); i++) {
+            if (snake.snake[0].getGlobalBounds().findIntersection(snake.snake[i].getGlobalBounds()))
+                snake.die = true;
+        }
+
+        if (snake.die == true) window.close();
+
+        
 
         window.clear(sf::Color(200, 200, 255));
 
