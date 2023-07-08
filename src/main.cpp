@@ -1,5 +1,6 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 #include <cmath>
 
@@ -8,6 +9,11 @@
 int main() {
     sf::RenderWindow window = sf::RenderWindow(sf::VideoMode(sf::Vector2<unsigned int>(640, 680)), "Snake", sf::Style::None);
     window.setVerticalSyncEnabled(true);
+    
+    sf::Music airship_serenity;
+    airship_serenity.openFromFile("assets/AirshipSerenity.wav");
+    airship_serenity.setLoop(true);
+    airship_serenity.play();
 
     sf::Texture atlas;
     atlas.loadFromFile("assets/atlas.png");

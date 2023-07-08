@@ -22,3 +22,4 @@ cmake --build .
 ```
 
 Make sure that the executable is run from the root of the project so that the assets can be accessed.
+NOTE: You will need to have openal32.dll alongside your executable for it to run. 
