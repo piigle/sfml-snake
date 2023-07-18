@@ -11,4 +11,4 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/SFML/include ${CMAKE_CURRENT
 
 add_executable(sfml_snake src/main.cpp src/snake.cpp)
 
-target_link_libraries(sfml_snake PRIVATE sfml-window sfml-audio sfml-main sfml-network sfml-graphics sfml-system)
+target_link_libraries(sfml_snake PRIVATE sfml-window sfml-audio sfml-main sfml-network sfml-graphics sfml-system -static-libgcc -static-libstdc++)
