@@ -2,7 +2,7 @@
 
 ---
 
-This is my first project using [SFML](https://www.sfml-dev.org/). As such, I made it to test some of SFML's features such as gamepad support and fonts. Try connecting a controller to your computer to try out the game with a controller.
+A basic snake game. I wrote this primarily to try and learn SFML.
 
 ## Building
 
@@ -21,5 +21,11 @@ cmake -G "Visual Studio 17 2022" ..
 cmake --build .
 ```
 
-Make sure that the executable is run from the root of the project so that the assets can be accessed.
-NOTE: You will need to have openal32.dll alongside your executable for it to run. 
+The executable must be run in the same directory as the assets folder
+NOTE: You will need to have openal32.dll alongside your executable for it to run. This file can be found in lib\SFML\extlibs\bin\x64
+
+## Music 
+
+"Airship Serenity" Kevin MacLeod (incompetech.com)
+Licensed under Creative Commons: By Attribution 4.0 License
+http://creativecommons.org/licenses/by/4.0/
